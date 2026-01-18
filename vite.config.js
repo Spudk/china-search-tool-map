@@ -6,6 +6,15 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
-    allowedHosts: ['all']
+    strictPort: false,
+    hmr: {
+      clientPort: 3000,
+      host: '3000-i38ap822v87sy2xai6x43-18e660f9.sandbox.novita.ai',
+      protocol: 'wss'
+    }
+  },
+  preview: {
+    port: 3000,
+    host: '0.0.0.0'
   }
 })
