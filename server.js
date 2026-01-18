@@ -52,6 +52,7 @@ app.post('/api/search', async (req, res) => {
       query,
       searchUrls: {
         baidu: baiduUrl,
+        dianping: `https://www.dianping.com/search/keyword/2/0_${encodeURIComponent(query)}`,
         taobao: `https://s.taobao.com/search?q=${encodeURIComponent(query)}`,
         jd: `https://search.jd.com/Search?keyword=${encodeURIComponent(query)}`,
         weibo: `https://s.weibo.com/weibo?q=${encodeURIComponent(query)}`,

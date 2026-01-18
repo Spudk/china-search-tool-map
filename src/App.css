@@ -281,6 +281,231 @@
   border-color: #0084ff;
 }
 
+.search-btn.dianping {
+  border-color: #ff8000;
+}
+
+.search-btn.dianping:hover {
+  background: #fff8f0;
+  border-color: #ff8000;
+}
+
+/* 대화 번역기 스타일 */
+.conversation-section {
+  max-width: 100%;
+}
+
+.section-desc {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.conversation-input-wrapper {
+  display: flex;
+  gap: 10px;
+}
+
+.conversation-input-wrapper input {
+  flex: 1;
+}
+
+.btn-icon {
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.btn-icon:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.conversation-result {
+  margin: 20px 0;
+}
+
+.translated-display {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+}
+
+.chinese-text {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+  text-align: center;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn-small {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.btn-small:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+}
+
+/* 자주 쓰는 문구 */
+.common-phrases {
+  margin-top: 30px;
+}
+
+.common-phrases h4 {
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.phrases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.phrase-btn {
+  padding: 15px;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.phrase-btn:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.phrase-ko {
+  display: block;
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.phrase-zh {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 번역 히스토리 */
+.conversation-history {
+  margin-top: 30px;
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.history-header h4 {
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.btn-clear {
+  padding: 8px 15px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.btn-clear:hover {
+  background: #c82333;
+}
+
+.history-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.history-item {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border-left: 3px solid #667eea;
+}
+
+.history-time {
+  font-size: 0.75rem;
+  color: #999;
+  margin-bottom: 5px;
+}
+
+.history-original {
+  color: #666;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.history-translated {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.btn-mini {
+  padding: 5px 10px;
+  background: #e9ecef;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.btn-mini:hover {
+  background: #667eea;
+  transform: scale(1.1);
+}
+
 .footer {
   text-align: center;
   color: white;
@@ -316,5 +541,31 @@
 
   .search-btn small {
     font-size: 0.8rem;
+  }
+
+  .tab {
+    padding: 12px 10px;
+    font-size: 0.85rem;
+  }
+
+  .phrases-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chinese-text {
+    font-size: 1.5rem;
+    padding: 15px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .conversation-input-wrapper {
+    flex-direction: column;
+  }
+
+  .btn-icon {
+    width: 100%;
   }
 }
