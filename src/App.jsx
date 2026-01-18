@@ -21,6 +21,52 @@ const COMMON_PHRASES = [
   { ko: '감사합니다', zh: '谢谢' },
 ];
 
+// 앱 정보 (딥링크 및 다운로드 링크)
+const APP_INFO = {
+  baidu: {
+    name: 'Baidu (百度)',
+    deeplink: 'baiduboxapp://search?query=',
+    ios: 'https://apps.apple.com/cn/app/id382201985',
+    android: 'https://shouji.baidu.com/',
+    web: true
+  },
+  dianping: {
+    name: 'Dianping (大众点评)',
+    deeplink: 'dianping://search?keyword=',
+    ios: 'https://apps.apple.com/cn/app/id351091731',
+    android: 'https://www.dianping.com/download',
+    web: true
+  },
+  taobao: {
+    name: 'Taobao (淘宝)',
+    deeplink: 'taobao://s.taobao.com/search?q=',
+    ios: 'https://apps.apple.com/cn/app/id387682726',
+    android: 'https://market.m.taobao.com/app/fdilab/download-page/main',
+    web: true
+  },
+  jd: {
+    name: 'JD.com (京东)',
+    deeplink: 'openapp.jdmobile://virtual?params={"category":"jump","des":"search","keyword":"',
+    ios: 'https://apps.apple.com/cn/app/id414245413',
+    android: 'https://app.jd.com/',
+    web: true
+  },
+  weibo: {
+    name: 'Weibo (微博)',
+    deeplink: 'sinaweibo://searchall?q=',
+    ios: 'https://apps.apple.com/cn/app/id350962117',
+    android: 'https://weibo.com/download',
+    web: true
+  },
+  zhihu: {
+    name: 'Zhihu (知乎)',
+    deeplink: 'zhihu://search?q=',
+    ios: 'https://apps.apple.com/cn/app/id432274380',
+    android: 'https://www.zhihu.com/app',
+    web: true
+  }
+};
+
 function App() {
   const [searchText, setSearchText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
@@ -28,6 +74,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('search');
+  const [showModal, setShowModal] = useState(false);
+  const [selectedApp, setSelectedApp] = useState(null);
   
   // 대화용 번역 상태
   const [conversationText, setConversationText] = useState('');
@@ -163,7 +211,6 @@ function App() {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    // 간단한 피드백 (실제로는 toast 알림을 사용하는 것이 좋음)
     alert('복사되었습니다!');
   };
 
@@ -171,9 +218,59 @@ function App() {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'zh-CN';
-      utterance.rate = 0.8; // 천천히 읽기
+      utterance.rate = 0.8;
       window.speechSynthesis.speak(utterance);
     }
+  };
+
+  // 앱으로 열기 시도
+  const tryOpenApp = (appKey, query) => {
+    const appInfo = APP_INFO[appKey];
+    const deeplink = appInfo.deeplink + encodeURIComponent(query);
+    
+    // 모바일 디바이스 감지
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // 앱 선택 모달 표시
+      setSelectedApp({
+        key: appKey,
+        info: appInfo,
+        query: query,
+        deeplink: deeplink,
+        webUrl: searchUrls[appKey]
+      });
+      setShowModal(true);
+    } else {
+      // 데스크톱에서는 바로 웹으로 열기
+      openUrl(searchUrls[appKey]);
+    }
+  };
+
+  const openInApp = () => {
+    if (!selectedApp) return;
+    
+    // 딥링크로 앱 열기 시도
+    window.location.href = selectedApp.deeplink;
+    
+    // 1.5초 후 앱이 열리지 않으면 스토어로 이동하도록 타이머 설정
+    setTimeout(() => {
+      setShowModal(false);
+    }, 1500);
+  };
+
+  const openInWeb = () => {
+    if (!selectedApp) return;
+    window.open(selectedApp.webUrl, '_blank', 'noopener,noreferrer');
+    setShowModal(false);
+  };
+
+  const openAppStore = () => {
+    if (!selectedApp) return;
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const storeUrl = isIOS ? selectedApp.info.ios : selectedApp.info.android;
+    window.open(storeUrl, '_blank', 'noopener,noreferrer');
+    setShowModal(false);
   };
 
   const openUrl = (url) => {
@@ -379,13 +476,14 @@ function App() {
           <div className="content">
             <div className="search-info">
               <h3>검색어: {translatedText}</h3>
-              <p>아래 버튼을 클릭하여 각 사이트에서 검색 결과를 확인하세요</p>
+              <p>📱 모바일: 앱으로 열기 또는 웹으로 보기를 선택하세요</p>
+              <p>💻 데스크톱: 웹 브라우저로 열립니다</p>
             </div>
 
             <div className="search-buttons">
               <button 
                 className="search-btn baidu"
-                onClick={() => openUrl(searchUrls.baidu)}
+                onClick={() => tryOpenApp('baidu', translatedText)}
               >
                 <span className="icon">🔍</span>
                 <div>
@@ -396,7 +494,7 @@ function App() {
 
               <button 
                 className="search-btn dianping"
-                onClick={() => openUrl(searchUrls.dianping)}
+                onClick={() => tryOpenApp('dianping', translatedText)}
               >
                 <span className="icon">⭐</span>
                 <div>
@@ -407,7 +505,7 @@ function App() {
 
               <button 
                 className="search-btn taobao"
-                onClick={() => openUrl(searchUrls.taobao)}
+                onClick={() => tryOpenApp('taobao', translatedText)}
               >
                 <span className="icon">🛒</span>
                 <div>
@@ -418,7 +516,7 @@ function App() {
 
               <button 
                 className="search-btn jd"
-                onClick={() => openUrl(searchUrls.jd)}
+                onClick={() => tryOpenApp('jd', translatedText)}
               >
                 <span className="icon">📦</span>
                 <div>
@@ -429,7 +527,7 @@ function App() {
 
               <button 
                 className="search-btn weibo"
-                onClick={() => openUrl(searchUrls.weibo)}
+                onClick={() => tryOpenApp('weibo', translatedText)}
               >
                 <span className="icon">💬</span>
                 <div>
@@ -440,7 +538,7 @@ function App() {
 
               <button 
                 className="search-btn zhihu"
-                onClick={() => openUrl(searchUrls.zhihu)}
+                onClick={() => tryOpenApp('zhihu', translatedText)}
               >
                 <span className="icon">💡</span>
                 <div>
@@ -459,6 +557,36 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* 앱 선택 모달 */}
+      {showModal && selectedApp && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{selectedApp.info.name}</h3>
+              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-desc">어떻게 열까요?</p>
+              
+              <button className="modal-btn modal-btn-app" onClick={openInApp}>
+                📱 앱으로 열기
+                <small>앱이 설치되어 있으면 바로 열립니다</small>
+              </button>
+              
+              <button className="modal-btn modal-btn-web" onClick={openInWeb}>
+                🌐 웹으로 보기
+                <small>브라우저에서 열립니다</small>
+              </button>
+              
+              <button className="modal-btn modal-btn-store" onClick={openAppStore}>
+                📲 앱 다운로드
+                <small>앱스토어/구글플레이로 이동</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="footer">
         <p>Made with ❤️ for China Business Travelers</p>
