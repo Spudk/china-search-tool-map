@@ -238,9 +238,12 @@
   const elHistory = document.getElementById("historyBox");
   const elCustomHint = document.getElementById("customHint");
   
+  // OS 감지
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
   // ===================== 초기화 =====================
   function init(){
-    // 도시 목록 렌더링
     elCity.innerHTML = "";
     cities.forEach(c => {
       let opt = document.createElement("option");
@@ -266,32 +269,24 @@
   // ===================== 검색 & 번역 로직 =====================
   function normalize(s) { return (s||"").trim(); }
 
-  // 한국어 -> { full: "중국어 한국어", cnOnly: "중국어" } 반환
   function translate(koQuery){
     const q = normalize(koQuery);
     if(!q) return { full:"", cnOnly:"" };
 
-    // 1. 커스텀 단어장 확인
     const cd = loadCustomDict();
     if(cd[q]) return { full: `${cd[q]} ${q}`, cnOnly: cd[q] };
 
-    // 2. 기본 사전 확인
     const exact = dict.find(x => x.ko === q);
     if(exact) return { full: `${exact.cn} ${q}`, cnOnly: exact.cn };
 
-    // 3. 부분 일치 확인
     for(const x of dict){
       if(q.includes(x.ko)) return { full: `${x.cn} ${q}`, cnOnly: x.cn };
     }
-
-    // 4. 매칭 없음 -> 원문 그대로
     return { full: q, cnOnly: q };
   }
 
-  // 퀵 버튼 클릭
   function quick(val){
     elQ.value = val;
-    // 시각적 피드백 (반짝임)
     elQ.style.backgroundColor = "#fff5e6";
     setTimeout(() => elQ.style.backgroundColor = "transparent", 300);
   }
@@ -301,7 +296,7 @@
     elQ.focus();
   }
 
-  // ===================== 실행 (Web / App) =====================
+  // ===================== 실행 (Web / App) 수정됨 =====================
   function go(type){
     const qRaw = normalize(elQ.value);
     if(!qRaw){ alert("검색어를 입력하세요."); elQ.focus(); return; }
@@ -309,19 +304,18 @@
     const tObj = translate(qRaw);
     const cityOpt = elCity.options[elCity.selectedIndex];
     const cityCn = cityOpt.value;
-    const dpId = cityOpt.dataset.dpId || "2"; // 기본 베이징
+    const dpId = cityOpt.dataset.dpId || "2"; 
     const isNearby = document.getElementById("chkNearby").checked;
 
     // 검색어 조합
     let finalQ = tObj.full;
-    if(isNearby) finalQ += " 附近"; // 근처
-    if(cityCn && !isNearby) finalQ += " " + cityCn; // 도시명
+    if(isNearby) finalQ += " 附近";
+    if(cityCn && !isNearby) finalQ += " " + cityCn; 
 
     const encodedQ = encodeURIComponent(finalQ);
     const engine = elEngine.value;
     let url = "";
 
-    // 히스토리 저장
     saveHistory(qRaw);
 
     if(type === 'web'){
@@ -329,28 +323,31 @@
       if(engine === 'dianping') url = `https://m.dianping.com/shoplist/${dpId}/search?keyword=${encodedQ}`;
       else if(engine === 'amap') url = `https://ditu.amap.com/search?query=${encodedQ}`;
       else if(engine === 'baidu') url = `https://www.baidu.com/s?wd=${encodedQ}`;
-    } else {
-      // [APP URL Scheme]
-      if(engine === 'dianping') {
-        // Dianping App Scheme (URI)
-        // 안되면 웹으로 폴백되진 않음 (브라우저가 물어봄)
-        url = `dianping://search?keyword=${encodedQ}&cityid=${dpId}`;
-      } else if(engine === 'amap') {
-        // Amap App Scheme (iOS/Android 공통 시도)
-        url = `iosamap://poi/search?keywords=${encodedQ}`;
-        // Android Fallback Intent는 JS로 어려움, 기본 스킴 시도.
-      } else if(engine === 'baidu') {
-        url = `baidumap://map/search?query=${encodedQ}`;
-      }
-    }
-
-    // 새창 열기
-    // 앱 스킴은 location.href로 이동해야 반응하는 경우가 많음
-    if(type === 'app') {
-      window.location.href = url;
-      // 앱이 없으면 아무 반응 없을 수 있음 -> 타임아웃 후 웹 이동 안내? (복잡하므로 생략)
-    } else {
+      
       window.open(url, '_blank');
+      
+    } else {
+      // [APP URL Scheme] - OS별 분기 처리 추가
+      if(engine === 'dianping') {
+        // Dianping은 searchshoplist가 더 확실하게 리스트를 보여줌
+        url = `dianping://searchshoplist?keyword=${encodedQ}&cityid=${dpId}`;
+      } 
+      else if(engine === 'amap') {
+        if(isAndroid) {
+            // 안드로이드 Amap (androidamap://)
+            url = `androidamap://poi?sourceApplication=webapp&keywords=${encodedQ}&dev=0`;
+        } else {
+            // 아이폰 Amap (iosamap://)
+            url = `iosamap://poi/search?keywords=${encodedQ}`;
+        }
+      } 
+      else if(engine === 'baidu') {
+        // Baidu Map
+        url = `baidumap://map/search?query=${encodedQ}&src=webapp`;
+      }
+      
+      // 앱 실행 시도
+      window.location.href = url;
     }
   }
 
@@ -358,12 +355,10 @@
   function copyCnOnly(){
     const qRaw = normalize(elQ.value);
     if(!qRaw) return;
-    
     const tObj = translate(qRaw);
     const txt = tObj.cnOnly;
-    
     navigator.clipboard.writeText(txt).then(() => {
-      alert(`복사됨: "${txt}"\n(택시 앱이나 위챗에 붙여넣으세요)`);
+      alert(`복사됨: "${txt}"`);
     }).catch(err => {
       prompt("복사하세요:", txt);
     });
@@ -378,21 +373,18 @@
   }
   function saveHistory(k){
     let h = JSON.parse(localStorage.getItem("searchHistory") || "[]");
-    // 중복제거 및 최신화
     h = h.filter(x => x !== k);
     h.unshift(k);
-    if(h.length > 8) h.pop(); // 최대 8개
+    if(h.length > 8) h.pop();
     localStorage.setItem("searchHistory", JSON.stringify(h));
     renderHistory(h);
   }
   function renderHistory(arr){
     if(!arr.length) { elHistory.innerHTML = ""; return; }
-    
     let html = `<span style="font-size:12px; margin-right:4px;">최근:</span>`;
     arr.forEach(k => {
       html += `<span class="chip" onclick="quick('${k}')">${k}</span>`;
     });
-    // 삭제 버튼
     html += `<span class="chip" style="background:#fff; border:1px solid #ddd;" onclick="clearHistory()">🗑</span>`;
     elHistory.innerHTML = html;
   }
@@ -433,4 +425,5 @@
   init();
 </script>
 </body>
+
 </html>
