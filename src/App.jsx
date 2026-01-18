@@ -36,8 +36,9 @@ const APP_INFO = {
   dianping: {
     name: 'Dianping (大众点评)',
     deeplinkBuilder: (query) => {
-      // Dianping 딥링크
-      return `dianping://search?keyword=${encodeURIComponent(query)}`;
+      // Dianping 딥링크 (여러 형식)
+      // 방법 1: 검색 페이지로 직접 이동
+      return `dianping://searchshoplist?keyword=${encodeURIComponent(query)}`;
     },
     ios: 'https://apps.apple.com/cn/app/id351091731',
     android: 'https://www.dianping.com/download',
