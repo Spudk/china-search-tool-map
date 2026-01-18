@@ -92,6 +92,7 @@ const APP_INFO = {
 function App() {
   const [searchText, setSearchText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
+  const [translationAlternatives, setTranslationAlternatives] = useState([]);
   const [searchUrls, setSearchUrls] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -114,6 +115,7 @@ function App() {
     setLoading(true);
     setError('');
     setTranslatedText('');
+    setTranslationAlternatives([]);
 
     try {
       const response = await fetch(`${API_URL}/translate`, {
@@ -132,6 +134,7 @@ function App() {
       
       if (response.ok) {
         setTranslatedText(data.translatedText);
+        setTranslationAlternatives(data.alternatives || []);
       } else {
         setError(data.error || '번역에 실패했습니다.');
       }
@@ -368,6 +371,30 @@ function App() {
               <div className="result-box">
                 <h3>번역 결과 (중국어):</h3>
                 <div className="translated-text">{translatedText}</div>
+                
+                {translationAlternatives && translationAlternatives.length > 1 && (
+                  <div className="alternatives-section">
+                    <h4>다른 번역 옵션:</h4>
+                    <div className="alternatives-list">
+                      {translationAlternatives.map((alt, index) => (
+                        <button
+                          key={index}
+                          className={`alternative-btn ${alt.engine === 'dictionary' ? 'dictionary' : ''}`}
+                          onClick={() => setTranslatedText(alt.translated)}
+                          title={`${alt.engine} 번역`}
+                        >
+                          <span className="alt-text">{alt.translated}</span>
+                          <span className="alt-source">{
+                            alt.engine === 'dictionary' ? '📚 사전' :
+                            alt.engine === 'google' ? '🔵 Google' :
+                            alt.engine === 'bing' ? '🟢 Bing' : alt.engine
+                          }</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <button 
                   className="btn btn-success"
                   onClick={handleSearch}

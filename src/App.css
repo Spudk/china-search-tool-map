@@ -166,6 +166,70 @@
   margin-bottom: 10px;
 }
 
+/* 대체 번역 옵션 */
+.alternatives-section {
+  margin: 20px 0;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+}
+
+.alternatives-section h4 {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.alternatives-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alternative-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.alternative-btn:hover {
+  border-color: #667eea;
+  background: #f0f2ff;
+  transform: translateX(5px);
+}
+
+.alternative-btn.dictionary {
+  border-color: #38ef7d;
+  background: #f0fff8;
+}
+
+.alternative-btn.dictionary:hover {
+  border-color: #11998e;
+  background: #e0fff5;
+}
+
+.alt-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.alt-source {
+  font-size: 0.85rem;
+  color: #999;
+  padding: 4px 10px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
 .error-message {
   background: #f8d7da;
   color: #721c24;
