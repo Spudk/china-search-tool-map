@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>KR → CN Search Pro (App/Web)</title>
+  <style>
+    :root { --primary: #222; --accent: #007aff; --bg: #f7f7f7; --card-bg: #fff; --border: #eee; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); padding: 12px; max-width: 600px; margin: 0 auto; color: #333; -webkit-tap-highlight-color: transparent; }
+    
+    /* 레이아웃 & 유틸 */
+    .row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .w-full { width: 100%; }
+    .flex-1 { flex: 1; }
+    .text-sm { font-size: 13px; color: #666; }
+    .hidden { display: none; }
+    
+    /* 입력창 그룹 */
+    .input-group { background: var(--card-bg); border-radius: 12px; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; }
+    .input-group input { border: none; background: transparent; padding: 12px; font-size: 16px; width: 100%; outline: none; }
+    .input-group button.icon-btn { background: none; border: none; padding: 10px; cursor: pointer; color: var(--accent); font-weight: 600; font-size: 14px; min-width: 50px; }
+    
+    /* 셀렉트 & 옵션 행 */
+    select { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font-size: 14px; outline: none; width: 100%; }
+    
+    /* 메인 액션 버튼 */
+    .action-btns { display: grid; grid-template-columns: 2fr 1.5fr; gap: 8px; margin-bottom: 16px; }
+    .btn { border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn:active { opacity: 0.7; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-app { background: var(--accent); color: #fff; }
+    .btn-ghost { background: #fff; border: 1px solid #ddd; color: #444; }
+
+    /* 히스토리 & 칩 */
+    .history-area { overflow-x: auto; white-space: nowrap; padding-bottom: 8px; margin-bottom: 8px; -webkit-overflow-scrolling: touch; }
+    .chip { display: inline-block; background: #e0e0e0; padding: 4px 10px; border-radius: 16px; font-size: 12px; margin-right: 6px; color: #444; cursor: pointer; }
+    .chip.active { background: #333; color: #fff; }
+
+    /* 탭 네비게이션 */
+    .tabs { display: flex; background: #fff; border-radius: 12px; padding: 4px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .tab { flex: 1; text-align: center; padding: 8px 0; font-size: 14px; color: #888; cursor: pointer; border-radius: 8px; font-weight: 500; }
+    .tab.active { background: #eee; color: #222; font-weight: 700; }
+
+    /* 버튼 그리드 패널 */
+    .panel { display: none; background: #fff; border-radius: 14px; padding: 12px; }
+    .panel.show { display: block; animation: fadeIn 0.2s; }
+    .grid-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .grid-btns button { background: #f5f5f7; border: 1px solid #eee; padding: 8px 12px; border-radius: 8px; font-size: 14px; cursor: pointer; color: #333; }
+    .grid-btns button:active { background: #ddd; }
+    
+    /* 성인/유흥 전용 스타일 */
+    .panel.adult button { border-color: #ffdce0; background: #fff5f6; color: #d63346; }
+
+    /* 설정/토글 영역 */
+    .settings { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 12px; }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <div class="input-group" style="margin-bottom: 10px;">
+    <input id="q" placeholder="검색어 (예: 훠궈, KTV, 마사지)" autocomplete="off" />
+    <button class="icon-btn" onclick="copyCnOnly()" title="중국어 번역만 복사 (택시/위챗용)">복사</button>
+    <button class="icon-btn" onclick="clearInput()" style="color:#999; min-width:30px;">X</button>
+  </div>
+
+  <div class="history-area" id="historyBox">
+    </div>
+
+  <div class="row">
+    <select id="engine" class="flex-1">
+      <option value="dianping">Dianping (대중점평)</option>
+      <option value="amap">Amap (고덕지도)</option>
+      <option value="baidu">Baidu (바이두)</option>
+    </select>
+    <select id="city" class="flex-1"></select>
+  </div>
+
+  <div class="action-btns">
+    <button class="btn btn-primary" onclick="go('web')">
+      <span>🌐 웹 검색</span>
+    </button>
+    <button class="btn btn-app" onclick="go('app')">
+      <span>📱 앱 실행</span>
+    </button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('food', this)">음식/카페</div>
+    <div class="tab" onclick="switchTab('life', this)">생활/편의</div>
+    <div class="tab" onclick="switchTab('wellness', this)">웰니스</div>
+    <div class="tab" onclick="switchTab('night', this)" style="color:#d63346;">유흥/확장</div>
+  </div>
+
+  <div id="panel-food" class="panel show">
+    <div class="grid-btns">
+      <button onclick="quick('한식당')">한식당</button>
+      <button onclick="quick('삼겹살')">삼겹살</button>
+      <button onclick="quick('치킨')">치킨</button>
+      <button onclick="quick('중식당')">중식당</button>
+      <button onclick="quick('훠궈')">훠궈</button>
+      <button onclick="quick('양꼬치')">양꼬치</button>
+      <button onclick="quick('딤섬')">딤섬</button>
+      <button onclick="quick('일식당')">일식당</button>
+      <button onclick="quick('초밥')">초밥</button>
+      <button onclick="quick('해산물')">해산물</button>
+      <button onclick="quick('커피숍')">커피숍</button>
+      <button onclick="quick('밀크티')">밀크티</button>
+      <button onclick="quick('디저트')">디저트</button>
+    </div>
+  </div>
+
+  <div id="panel-life" class="panel">
+    <div class="grid-btns">
+      <button onclick="quick('호텔')">호텔</button>
+      <button onclick="quick('편의점')">편의점</button>
+      <button onclick="quick('마트')">마트</button>
+      <button onclick="quick('약국')">약국</button>
+      <button onclick="quick('병원')">병원</button>
+      <button onclick="quick('택시')">택시(승차점)</button>
+      <button onclick="quick('지하철역')">지하철역</button>
+      <button onclick="quick('ATM')">ATM</button>
+      <button onclick="quick('환전')">환전</button>
+      <button onclick="quick('미용실')">미용실</button>
+      <button onclick="quick('세탁소')">세탁소</button>
+    </div>
+  </div>
+
+  <div id="panel-wellness" class="panel">
+    <div class="grid-btns">
+      <button onclick="quick('마사지')">전신마사지</button>
+      <button onclick="quick('발마사지')">발마사지</button>
+      <button onclick="quick('스파')">SPA</button>
+      <button onclick="quick('사우나')">사우나</button>
+      <button onclick="quick('목욕탕')">목욕탕</button>
+      <button onclick="quick('찜질방')">찜질방</button>
+      <button onclick="quick('헬스장')">헬스장</button>
+    </div>
+  </div>
+
+  <div id="panel-night" class="panel adult">
+    <div class="text-sm" style="margin-bottom:8px;">⚠️ 성인/유흥 관련 키워드 포함 (테스트 모드)</div>
+    <div class="grid-btns">
+      <button onclick="quick('KTV')">KTV(노래방)</button>
+      <button onclick="quick('룸')">룸(비즈니스)</button>
+      <button onclick="quick('바')">Bar(바)</button>
+      <button onclick="quick('펍')">Pub(맥주)</button>
+      <button onclick="quick('클럽')">클럽</button>
+      <button onclick="quick('남성전용')">남성전용 SPA</button>
+      <button onclick="quick('접대')">접대/비즈니스</button>
+      <button onclick="quick('오피')">프라이빗/오피</button>
+      <button onclick="quick('출장샵')">출장서비스</button>
+      <button onclick="quick('19')">성인용품</button>
+    </div>
+  </div>
+
+  <div class="settings">
+    <div class="toggle-row">
+      <span>📍 내 위치 주변 검색 (근처/附近 추가)</span>
+      <input type="checkbox" id="chkNearby" checked />
+    </div>
+    
+    <details>
+      <summary style="cursor:pointer; color:#666; font-size:14px; margin-top:8px;">커스텀 단어장 열기</summary>
+      <div style="margin-top:10px; background:#f9f9f9; padding:8px; border-radius:8px;">
+        <div class="row">
+          <input id="customKo" placeholder="한국어 (예: 순대국)" style="border:1px solid #ddd; padding:6px; width:40%; border-radius:6px;">
+          <input id="customCn" placeholder="중국어 (예: 米肠汤)" style="border:1px solid #ddd; padding:6px; width:40%; border-radius:6px;">
+          <button onclick="saveCustom()" style="padding:6px 10px; background:#333; color:#fff; border:none; border-radius:6px;">저장</button>
+        </div>
+        <div class="row">
+            <button onclick="clearCustom()" style="width:100%; padding:6px; background:#fff; border:1px solid #ddd; border-radius:6px;">단어장 초기화</button>
+        </div>
+        <div id="customHint" class="text-sm"></div>
+      </div>
+    </details>
+    
+    <div class="text-sm" style="margin-top:12px; color:#888;">
+      v2.0 Pro | 도시+키워드 자동조합 | App Direct Link
+    </div>
+  </div>
+
+<script>
+  // ===================== 데이터 & 설정 =====================
+  const cities = [
+    { ko:"도시선택", cn:"", dpId:"" },
+    { ko:"상하이", cn:"上海", dpId:"1" },
+    { ko:"베이징", cn:"北京", dpId:"2" },
+    { ko:"광저우", cn:"广州", dpId:"4" },
+    { ko:"선전", cn:"深圳", dpId:"7" },
+    { ko:"칭다오", cn:"青岛", dpId:"8" },
+    { ko:"항저우", cn:"杭州", dpId:"3" },
+    { ko:"다롄", cn:"大连", dpId:"9" },
+    { ko:"청두", cn:"成都", dpId:"10" },
+    { ko:"시안", cn:"西安", dpId:"13" },
+    { ko:"톈진", cn:"天津", dpId:"17" },
+    { ko:"옌지", cn:"延吉", dpId:"620" },
+    { ko:"장자제", cn:"张家界", dpId:"311" }
+  ];
+
+  const dict = [
+    // [확장 키워드]
+    { ko:"남성전용", cn:"男士SPA 男士养生" },
+    { ko:"룸", cn:"商务KTV 包间 夜总会" },
+    { ko:"접대", cn:"商务宴请 商务接待" },
+    { ko:"19", cn:"成人用品 情趣" },
+    { ko:"오피", cn:"私人会所 公寓SPA" },
+    { ko:"출장샵", cn:"上门按摩 上门服务" },
+    { ko:"KTV", cn:"KTV 量贩KTV 商务KTV" },
+    { ko:"클럽", cn:"夜店 Club蹦迪" },
+
+    // [일반 키워드]
+    { ko:"한식당", cn:"韩国料理 韩餐" }, { ko:"삼겹살", cn:"韩式烤肉 五花肉" },
+    { ko:"치킨", cn:"炸鸡" }, { ko:"중식당", cn:"中餐" },
+    { ko:"훠궈", cn:"火锅" }, { ko:"양꼬치", cn:"羊肉串" },
+    { ko:"딤섬", cn:"点心 粤菜" }, { ko:"일식당", cn:"日本料理" },
+    { ko:"초밥", cn:"寿司" }, { ko:"해산물", cn:"海鲜" },
+    { ko:"커피숍", cn:"咖啡馆" }, { ko:"밀크티", cn:"奶茶" },
+    { ko:"디저트", cn:"甜品" },
+    { ko:"호텔", cn:"酒店" }, { ko:"편의점", cn:"便利店" },
+    { ko:"마트", cn:"超市" }, { ko:"약국", cn:"药房" },
+    { ko:"병원", cn:"医院" }, { ko:"택시", cn:"出租车" },
+    { ko:"지하철역", cn:"地铁站" }, { ko:"환전", cn:"货币兑换" },
+    { ko:"ATM", cn:"ATM" }, { ko:"미용실", cn:"理发店" },
+    { ko:"세탁소", cn:"洗衣店" },
+    { ko:"마사지", cn:"按摩 推拿" }, { ko:"발마사지", cn:"足疗 足浴" },
+    { ko:"스파", cn:"SPA 水疗" }, { ko:"사우나", cn:"桑拿 洗浴" },
+    { ko:"목욕탕", cn:"澡堂 泡汤" }, { ko:"찜질방", cn:"汗蒸" },
+    { ko:"헬스장", cn:"健身房" }, { ko:"바", cn:"酒吧" }, { ko:"펍", cn:"精酿啤酒" }
+  ];
+
+  // ===================== DOM 요소 =====================
+  const elQ = document.getElementById("q");
+  const elEngine = document.getElementById("engine");
+  const elCity = document.getElementById("city");
+  const elHistory = document.getElementById("historyBox");
+  const elCustomHint = document.getElementById("customHint");
+  
+  // ===================== 초기화 =====================
+  function init(){
+    // 도시 목록 렌더링
+    elCity.innerHTML = "";
+    cities.forEach(c => {
+      let opt = document.createElement("option");
+      opt.value = c.cn;
+      opt.textContent = c.ko + (c.cn ? ` (${c.cn})` : "");
+      opt.dataset.dpId = c.dpId;
+      elCity.appendChild(opt);
+    });
+
+    loadHistory();
+    refreshCustomHint();
+  }
+  
+  // ===================== 탭 로직 =====================
+  function switchTab(name, tabEl){
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tabEl.classList.add("active");
+    
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("show"));
+    document.getElementById(`panel-${name}`).classList.add("show");
+  }
+
+  // ===================== 검색 & 번역 로직 =====================
+  function normalize(s) { return (s||"").trim(); }
+
+  // 한국어 -> { full: "중국어 한국어", cnOnly: "중국어" } 반환
+  function translate(koQuery){
+    const q = normalize(koQuery);
+    if(!q) return { full:"", cnOnly:"" };
+
+    // 1. 커스텀 단어장 확인
+    const cd = loadCustomDict();
+    if(cd[q]) return { full: `${cd[q]} ${q}`, cnOnly: cd[q] };
+
+    // 2. 기본 사전 확인
+    const exact = dict.find(x => x.ko === q);
+    if(exact) return { full: `${exact.cn} ${q}`, cnOnly: exact.cn };
+
+    // 3. 부분 일치 확인
+    for(const x of dict){
+      if(q.includes(x.ko)) return { full: `${x.cn} ${q}`, cnOnly: x.cn };
+    }
+
+    // 4. 매칭 없음 -> 원문 그대로
+    return { full: q, cnOnly: q };
+  }
+
+  // 퀵 버튼 클릭
+  function quick(val){
+    elQ.value = val;
+    // 시각적 피드백 (반짝임)
+    elQ.style.backgroundColor = "#fff5e6";
+    setTimeout(() => elQ.style.backgroundColor = "transparent", 300);
+  }
+
+  function clearInput(){
+    elQ.value = "";
+    elQ.focus();
+  }
+
+  // ===================== 실행 (Web / App) =====================
+  function go(type){
+    const qRaw = normalize(elQ.value);
+    if(!qRaw){ alert("검색어를 입력하세요."); elQ.focus(); return; }
+
+    const tObj = translate(qRaw);
+    const cityOpt = elCity.options[elCity.selectedIndex];
+    const cityCn = cityOpt.value;
+    const dpId = cityOpt.dataset.dpId || "2"; // 기본 베이징
+    const isNearby = document.getElementById("chkNearby").checked;
+
+    // 검색어 조합
+    let finalQ = tObj.full;
+    if(isNearby) finalQ += " 附近"; // 근처
+    if(cityCn && !isNearby) finalQ += " " + cityCn; // 도시명
+
+    const encodedQ = encodeURIComponent(finalQ);
+    const engine = elEngine.value;
+    let url = "";
+
+    // 히스토리 저장
+    saveHistory(qRaw);
+
+    if(type === 'web'){
+      // [WEB URL]
+      if(engine === 'dianping') url = `https://m.dianping.com/shoplist/${dpId}/search?keyword=${encodedQ}`;
+      else if(engine === 'amap') url = `https://ditu.amap.com/search?query=${encodedQ}`;
+      else if(engine === 'baidu') url = `https://www.baidu.com/s?wd=${encodedQ}`;
+    } else {
+      // [APP URL Scheme]
+      if(engine === 'dianping') {
+        // Dianping App Scheme (URI)
+        // 안되면 웹으로 폴백되진 않음 (브라우저가 물어봄)
+        url = `dianping://search?keyword=${encodedQ}&cityid=${dpId}`;
+      } else if(engine === 'amap') {
+        // Amap App Scheme (iOS/Android 공통 시도)
+        url = `iosamap://poi/search?keywords=${encodedQ}`;
+        // Android Fallback Intent는 JS로 어려움, 기본 스킴 시도.
+      } else if(engine === 'baidu') {
+        url = `baidumap://map/search?query=${encodedQ}`;
+      }
+    }
+
+    // 새창 열기
+    // 앱 스킴은 location.href로 이동해야 반응하는 경우가 많음
+    if(type === 'app') {
+      window.location.href = url;
+      // 앱이 없으면 아무 반응 없을 수 있음 -> 타임아웃 후 웹 이동 안내? (복잡하므로 생략)
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
+  // ===================== 중국어만 복사 =====================
+  function copyCnOnly(){
+    const qRaw = normalize(elQ.value);
+    if(!qRaw) return;
+    
+    const tObj = translate(qRaw);
+    const txt = tObj.cnOnly;
+    
+    navigator.clipboard.writeText(txt).then(() => {
+      alert(`복사됨: "${txt}"\n(택시 앱이나 위챗에 붙여넣으세요)`);
+    }).catch(err => {
+      prompt("복사하세요:", txt);
+    });
+  }
+
+  // ===================== 히스토리 관리 =====================
+  function loadHistory(){
+    try {
+      const h = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+      renderHistory(h);
+    } catch(e){}
+  }
+  function saveHistory(k){
+    let h = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+    // 중복제거 및 최신화
+    h = h.filter(x => x !== k);
+    h.unshift(k);
+    if(h.length > 8) h.pop(); // 최대 8개
+    localStorage.setItem("searchHistory", JSON.stringify(h));
+    renderHistory(h);
+  }
+  function renderHistory(arr){
+    if(!arr.length) { elHistory.innerHTML = ""; return; }
+    
+    let html = `<span style="font-size:12px; margin-right:4px;">최근:</span>`;
+    arr.forEach(k => {
+      html += `<span class="chip" onclick="quick('${k}')">${k}</span>`;
+    });
+    // 삭제 버튼
+    html += `<span class="chip" style="background:#fff; border:1px solid #ddd;" onclick="clearHistory()">🗑</span>`;
+    elHistory.innerHTML = html;
+  }
+  function clearHistory(){
+    localStorage.removeItem("searchHistory");
+    renderHistory([]);
+  }
+
+  // ===================== 커스텀 단어장 =====================
+  function loadCustomDict(){
+    try { return JSON.parse(localStorage.getItem("customDict") || "{}"); } catch(e){ return {}; }
+  }
+  function saveCustom(){
+    const k = normalize(document.getElementById("customKo").value);
+    const c = normalize(document.getElementById("customCn").value);
+    if(!k || !c) return alert("내용을 입력하세요");
+    const d = loadCustomDict();
+    d[k] = c;
+    localStorage.setItem("customDict", JSON.stringify(d));
+    document.getElementById("customKo").value="";
+    document.getElementById("customCn").value="";
+    refreshCustomHint();
+    alert("저장되었습니다.");
+  }
+  function clearCustom(){
+    if(confirm("단어장을 정말 비우시겠습니까?")){
+      localStorage.removeItem("customDict");
+      refreshCustomHint();
+    }
+  }
+  function refreshCustomHint(){
+    const d = loadCustomDict();
+    const cnt = Object.keys(d).length;
+    elCustomHint.textContent = cnt > 0 ? `현재 ${cnt}개의 커스텀 단어가 등록됨` : "등록된 단어 없음";
+  }
+
+  // 실행
+  init();
+</script>
+</body>
+</html>
