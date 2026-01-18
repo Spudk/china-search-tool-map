@@ -595,6 +595,26 @@
   padding: 25px;
 }
 
+.modal-search-info {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border-left: 4px solid #667eea;
+}
+
+.modal-search-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.modal-search-query {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #667eea;
+}
+
 .modal-desc {
   color: #666;
   margin-bottom: 20px;

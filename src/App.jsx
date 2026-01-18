@@ -25,42 +25,64 @@ const COMMON_PHRASES = [
 const APP_INFO = {
   baidu: {
     name: 'Baidu (百度)',
-    deeplink: 'baiduboxapp://search?query=',
+    deeplinkBuilder: (query) => {
+      // Baidu 앱 딥링크 (여러 형식 시도)
+      return `baiduboxapp://search?word=${encodeURIComponent(query)}`;
+    },
     ios: 'https://apps.apple.com/cn/app/id382201985',
     android: 'https://shouji.baidu.com/',
     web: true
   },
   dianping: {
     name: 'Dianping (大众点评)',
-    deeplink: 'dianping://search?keyword=',
+    deeplinkBuilder: (query) => {
+      // Dianping 딥링크
+      return `dianping://search?keyword=${encodeURIComponent(query)}`;
+    },
     ios: 'https://apps.apple.com/cn/app/id351091731',
     android: 'https://www.dianping.com/download',
     web: true
   },
   taobao: {
     name: 'Taobao (淘宝)',
-    deeplink: 'taobao://s.taobao.com/search?q=',
+    deeplinkBuilder: (query) => {
+      // Taobao 딥링크 (최신 형식)
+      return `taobao://s.taobao.com/search?q=${encodeURIComponent(query)}`;
+    },
     ios: 'https://apps.apple.com/cn/app/id387682726',
     android: 'https://market.m.taobao.com/app/fdilab/download-page/main',
     web: true
   },
   jd: {
     name: 'JD.com (京东)',
-    deeplink: 'openapp.jdmobile://virtual?params={"category":"jump","des":"search","keyword":"',
+    deeplinkBuilder: (query) => {
+      // JD 딥링크 (간단한 형식)
+      return `openapp.jdmobile://virtual?params=${encodeURIComponent(JSON.stringify({
+        category: "jump",
+        des: "search",
+        keyword: query
+      }))}`;
+    },
     ios: 'https://apps.apple.com/cn/app/id414245413',
     android: 'https://app.jd.com/',
     web: true
   },
   weibo: {
     name: 'Weibo (微博)',
-    deeplink: 'sinaweibo://searchall?q=',
+    deeplinkBuilder: (query) => {
+      // Weibo 딥링크
+      return `sinaweibo://searchall?q=${encodeURIComponent(query)}`;
+    },
     ios: 'https://apps.apple.com/cn/app/id350962117',
     android: 'https://weibo.com/download',
     web: true
   },
   zhihu: {
     name: 'Zhihu (知乎)',
-    deeplink: 'zhihu://search?q=',
+    deeplinkBuilder: (query) => {
+      // Zhihu 딥링크
+      return `zhihu://search?q=${encodeURIComponent(query)}`;
+    },
     ios: 'https://apps.apple.com/cn/app/id432274380',
     android: 'https://www.zhihu.com/app',
     web: true
@@ -226,7 +248,7 @@ function App() {
   // 앱으로 열기 시도
   const tryOpenApp = (appKey, query) => {
     const appInfo = APP_INFO[appKey];
-    const deeplink = appInfo.deeplink + encodeURIComponent(query);
+    const deeplink = appInfo.deeplinkBuilder(query);
     
     // 모바일 디바이스 감지
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -567,6 +589,10 @@ function App() {
               <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <div className="modal-body">
+              <div className="modal-search-info">
+                <div className="modal-search-label">검색어:</div>
+                <div className="modal-search-query">{selectedApp.query}</div>
+              </div>
               <p className="modal-desc">어떻게 열까요?</p>
               
               <button className="modal-btn modal-btn-app" onClick={openInApp}>
